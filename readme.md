@@ -3,7 +3,7 @@
 ## Doel
 
 Deze repository bevat een **didactische programmeeromgeving voor beginners**.
-Studenten kunnen hiermee **Processing-achtig programmeren in Python** zonder iets te installeren.
+Leerlingen kunnen hiermee **Processing-achtig programmeren in Python** zonder iets te installeren.
 
 Kenmerken:
 
@@ -13,7 +13,7 @@ Kenmerken:
 * syntax lijkt sterk op **Processing**
 * geschikt voor eerste lessen **computational thinking**
 
-Studenten programmeren bijvoorbeeld zo:
+Leerlingen programmeren bijvoorbeeld zo:
 
 ```python
 from processing import *
@@ -50,7 +50,7 @@ De structuur volgt drie eenvoudige concepten:
 | logic   | regels die de toestand veranderen                        |
 | view    | wat er op het scherm getekend wordt                      |
 
-Dit helpt studenten om **computational thinking** te ontwikkelen voordat ze complexere frameworks gebruiken.
+Dit helpt leerlingen om **computational thinking** te ontwikkelen voordat ze complexere frameworks gebruiken.
 
 ---
 
@@ -178,13 +178,13 @@ Door Python **portable op een stick** te zetten:
 
 * blijft de omgeving **controleerbaar**
 * werkt alles **offline**
-* kunnen studenten **direct programmeren**
+* kunnen leerlingen **direct programmeren**
 
 ---
 
-# Voorbeeldopdracht (eerste les)
+# Voorbeeldopdracht
 
-Laat studenten een bewegend object maken:
+Laat leerlingen een bewegend object maken:
 
 ```python
 from processing import *
@@ -215,7 +215,7 @@ Concepten:
 
 # Mogelijke uitbreidingen
 
-Later kunnen studenten toevoegen:
+Later kunnen leerlingen toevoegen:
 
 * toetsenbordinput
 * meerdere objecten
@@ -240,4 +240,4 @@ Dit project biedt:
 * **geen installatie nodig**
 * geschikt voor **introductie programmeren**
 
-Het doel is om studenten **snel visuele feedback te geven**, zodat programmeren meteen leuk en begrijpelijk wordt.
+Het doel is om leerlingen **snel visuele feedback te geven**, zodat programmeren meteen leuk en begrijpelijk wordt.

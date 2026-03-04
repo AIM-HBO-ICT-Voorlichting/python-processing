@@ -1,0 +1,9 @@
+# Python runtime negeren
+/python/*
+
+# maar deze config wél tracken
+!/python/python313._pth
+
+# standaard python 
+__pycache__/
+*.pyc

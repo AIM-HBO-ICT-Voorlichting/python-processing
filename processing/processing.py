@@ -9,6 +9,10 @@ from .core.public_globals import PUBLIC_GLOBAL_NAMES
 from .core.dispatch import invoke_handler
 from .core.input_async import AsyncInputManager
 from .core.runtime import run_app
+from .core.window import resolve_icon_path as _resolve_icon_path_core
+from .core.window import apply_window_icon as _apply_window_icon_core
+from .core.window import init_window as _init_window_core
+from .core.fonts import ensure_font as _ensure_font_core
 from .api import drawing as _drawing_api
 from .api import style as _style_api
 from .api import system as _system_api
@@ -182,9 +186,7 @@ def bezier(x1, y1, x2, y2, x3, y3, x4, y4, segments=20):
 # --------------------
 
 def _ensure_font():
-    global _font
-    if _font is None:
-        _font = pygame.font.SysFont(None, _text_size)
+    _ensure_font_core(_state(), pygame)
 
 def _apply_coords(vals):
     return tuple(int(v) for v in vals)
@@ -208,27 +210,10 @@ def _sync_public_globals_to_sketch():
         _sketch_globals[name] = globals()[name]
 
 def _resolve_icon_path(path):
-    if os.path.isabs(path):
-        return path
-
-    # Try caller working directory first, then processing package directory.
-    if os.path.exists(path):
-        return path
-
-    pkg_path = os.path.join(os.path.dirname(__file__), path)
-    if os.path.exists(pkg_path):
-        return pkg_path
-
-    return path
+    return _resolve_icon_path_core(os.path.dirname(__file__), path)
 
 def _apply_window_icon():
-    resolved = _resolve_icon_path(_window_icon)
-    try:
-        icon_surface = pygame.image.load(resolved)
-        pygame.display.set_icon(icon_surface)
-    except Exception:
-        # Keep startup robust if icon path is invalid or image can't be loaded.
-        pass
+    _apply_window_icon_core(_state(), pygame, os.path.dirname(__file__))
 
 def _make_sketch_from_caller():
     global _sketch_globals
@@ -237,28 +222,7 @@ def _make_sketch_from_caller():
     return type("Sketch", (object,), caller_globals)
 
 def _init_window():
-    global _screen, _clock, _millis_start, _width, _height
-    pygame.init()
-    pygame.font.init()
-    info = pygame.display.Info()
-    _set_public_global("display_width", int(info.current_w))
-    _set_public_global("display_height", int(info.current_h))
-
-    flags = 0
-    if _fullscreen_enabled:
-        _width, _height = int(info.current_w), int(info.current_h)
-        flags = pygame.FULLSCREEN
-
-    _screen = pygame.display.set_mode((_width, _height), flags)
-    _millis_start = pygame.time.get_ticks()
-    _apply_window_icon()
-    pygame.display.set_caption(_title)
-    _clock = pygame.time.Clock()
-    _set_public_global("width", _width)
-    _set_public_global("height", _height)
-    _set_public_global("pixel_width", _width)
-    _set_public_global("pixel_height", _height)
-    _set_public_global("focused", True)
+    _init_window_core(_state(), pygame, _set_public_global, _apply_window_icon)
 
 def _shutdown():
     pygame.quit()

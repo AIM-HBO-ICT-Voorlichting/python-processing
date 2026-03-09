@@ -14,6 +14,14 @@ _fps = 60
 _title = "Sketch"
 _window_icon = "icon.png"
 
+# Processing-style text alignment constants
+LEFT = 37
+RIGHT = 39
+CENTER = 3
+TOP = 101
+BOTTOM = 102
+BASELINE = 0
+
 _screen = None
 _clock = None
 
@@ -25,8 +33,8 @@ _stroke_color = (0, 0, 0)
 _stroke_weight = 1
 _text_size = 12
 _font = None
-_text_align_x = "LEFT"
-_text_align_y = "TOP"
+_text_align_x = LEFT
+_text_align_y = TOP
 _sketch_globals = None
 _millis_start = None
 
@@ -57,14 +65,6 @@ mouseButton = None
 key = None
 keyCode = None
 keyPressed = False
-
-# text alignment constants
-LEFT = "LEFT"
-CENTER = "CENTER"
-RIGHT = "RIGHT"
-TOP = "TOP"
-BOTTOM = "BOTTOM"
-BASELINE = "BASELINE"
 
 
 # --------------------
@@ -238,20 +238,31 @@ def text(txt, x, y):
 
     _screen.blit(surf, (x, y))
 
+def _parse_text_align(value, axis):
+    if axis == "x":
+        if value in (LEFT, CENTER, RIGHT):
+            return value
+        x_map = {"LEFT": LEFT, "CENTER": CENTER, "RIGHT": RIGHT}
+        key = str(value).upper()
+        if key in x_map:
+            return x_map[key]
+        raise ValueError("textAlign() x alignment must be LEFT, CENTER, or RIGHT")
+
+    if value in (TOP, CENTER, BOTTOM, BASELINE):
+        return value
+    y_map = {"TOP": TOP, "CENTER": CENTER, "BOTTOM": BOTTOM, "BASELINE": BASELINE}
+    key = str(value).upper()
+    if key in y_map:
+        return y_map[key]
+    raise ValueError("textAlign() y alignment must be TOP, CENTER, BOTTOM, or BASELINE")
+
 def textAlign(align_x, align_y=None):
     global _text_align_x, _text_align_y
 
-    ax = str(align_x).upper()
-    if ax not in (LEFT, CENTER, RIGHT):
-        raise ValueError("textAlign() x alignment must be LEFT, CENTER, or RIGHT")
-
-    _text_align_x = ax
+    _text_align_x = _parse_text_align(align_x, "x")
 
     if align_y is not None:
-        ay = str(align_y).upper()
-        if ay not in (TOP, CENTER, BOTTOM, BASELINE):
-            raise ValueError("textAlign() y alignment must be TOP, CENTER, BOTTOM, or BASELINE")
-        _text_align_y = ay
+        _text_align_y = _parse_text_align(align_y, "y")
 
 def random(low=None, high=None):
     if low is None and high is None:

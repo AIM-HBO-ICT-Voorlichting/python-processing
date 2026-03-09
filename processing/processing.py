@@ -51,21 +51,21 @@ _original_input = builtins.input
 # Public Processing-like globals
 width = _width
 height = _height
-displayWidth = _width
-displayHeight = _height
-pixelWidth = _width
-pixelHeight = _height
-frameCount = 0
+display_width = _width
+display_height = _height
+pixel_width = _width
+pixel_height = _height
+frame_count = 0
 focused = False
-mouseX = 0
-mouseY = 0
-pmouseX = 0
-pmouseY = 0
-mousePressed = False
-mouseButton = None
+mouse_x = 0
+mouse_y = 0
+pmouse_x = 0
+pmouse_y = 0
+is_mouse_pressed = False
+mouse_button = None
 key = None
-keyCode = None
-keyPressed = False
+key_code = None
+is_key_pressed = False
 
 
 # --------------------
@@ -77,10 +77,10 @@ def size(w, h):
     _width, _height = int(w), int(h)
     _set_public_global("width", _width)
     _set_public_global("height", _height)
-    _set_public_global("pixelWidth", _width)
-    _set_public_global("pixelHeight", _height)
+    _set_public_global("pixel_width", _width)
+    _set_public_global("pixel_height", _height)
 
-def fullScreen():
+def full_screen():
     global _fullscreen_enabled, _width, _height, _screen
     _fullscreen_enabled = True
 
@@ -90,8 +90,8 @@ def fullScreen():
         _screen = pygame.display.set_mode((_width, _height), pygame.FULLSCREEN)
         _set_public_global("width", _width)
         _set_public_global("height", _height)
-        _set_public_global("pixelWidth", _width)
-        _set_public_global("pixelHeight", _height)
+        _set_public_global("pixel_width", _width)
+        _set_public_global("pixel_height", _height)
 
 def frame_rate(fps):
     global _fps
@@ -195,7 +195,7 @@ def fill(r, g=None, b=None):
     else:
         _fill_color = (int(r), int(g), int(b))
 
-def noFill():
+def no_fill():
     global _fill_enabled
     _fill_enabled = False
 
@@ -208,11 +208,11 @@ def stroke(r, g=None, b=None):
     else:
         _stroke_color = (int(r), int(g), int(b))
 
-def noStroke():
+def no_stroke():
     global _stroke_enabled
     _stroke_enabled = False
 
-def strokeWeight(w):
+def stroke_weight(w):
     global _stroke_weight
     _stroke_weight = int(w)
 
@@ -226,7 +226,7 @@ def color(r, g=None, b=None, a=None):
         col = (*col, int(a))
     return col
 
-def textSize(sz):
+def text_size(sz):
     global _text_size, _font
     _text_size = int(sz)
     _font = None  # will recreate on next draw
@@ -260,7 +260,7 @@ def _parse_text_align(value, axis):
         key = str(value).upper()
         if key in x_map:
             return x_map[key]
-        raise ValueError("textAlign() x alignment must be LEFT, CENTER, or RIGHT")
+        raise ValueError("text_align() x alignment must be LEFT, CENTER, or RIGHT")
 
     if value in (TOP, CENTER, BOTTOM, BASELINE):
         return value
@@ -268,9 +268,9 @@ def _parse_text_align(value, axis):
     key = str(value).upper()
     if key in y_map:
         return y_map[key]
-    raise ValueError("textAlign() y alignment must be TOP, CENTER, BOTTOM, or BASELINE")
+    raise ValueError("text_align() y alignment must be TOP, CENTER, BOTTOM, or BASELINE")
 
-def textAlign(align_x, align_y=None):
+def text_align(align_x, align_y=None):
     global _text_align_x, _text_align_y
 
     _text_align_x = _parse_text_align(align_x, "x")
@@ -312,7 +312,7 @@ def nf(value, left=0, right=0):
 
     return sign + formatted
 
-def loadImage(path):
+def load_image(path):
     resolved = _resolve_icon_path(str(path))
     return pygame.image.load(resolved)
 
@@ -320,7 +320,7 @@ def image(img, x, y, w=None, h=None):
     _require_screen("image")
 
     if isinstance(img, str):
-        img = loadImage(img)
+        img = load_image(img)
 
     if not isinstance(img, pygame.Surface):
         raise TypeError("image() expects a pygame Surface or a path string")
@@ -408,9 +408,9 @@ def _sync_public_globals_to_sketch():
     if _sketch_globals is None:
         return
     for name in (
-        "width", "height", "displayWidth", "displayHeight", "pixelWidth", "pixelHeight",
-        "frameCount", "focused", "mouseX", "mouseY", "pmouseX", "pmouseY",
-        "mousePressed", "mouseButton", "key", "keyCode", "keyPressed"
+        "width", "height", "display_width", "display_height", "pixel_width", "pixel_height",
+        "frame_count", "focused", "mouse_x", "mouse_y", "pmouse_x", "pmouse_y",
+        "is_mouse_pressed", "mouse_button", "key", "key_code", "is_key_pressed"
     ):
         _sketch_globals[name] = globals()[name]
 
@@ -518,8 +518,8 @@ def _init_window():
     pygame.init()
     pygame.font.init()
     info = pygame.display.Info()
-    _set_public_global("displayWidth", int(info.current_w))
-    _set_public_global("displayHeight", int(info.current_h))
+    _set_public_global("display_width", int(info.current_w))
+    _set_public_global("display_height", int(info.current_h))
 
     flags = 0
     if _fullscreen_enabled:
@@ -533,8 +533,8 @@ def _init_window():
     _clock = pygame.time.Clock()
     _set_public_global("width", _width)
     _set_public_global("height", _height)
-    _set_public_global("pixelWidth", _width)
-    _set_public_global("pixelHeight", _height)
+    _set_public_global("pixel_width", _width)
+    _set_public_global("pixel_height", _height)
     _set_public_global("focused", True)
 
 def _shutdown():
@@ -599,10 +599,10 @@ def run(mode=None):
             sketch.setup()
             pygame.key.start_text_input()
             current_mouse_x, current_mouse_y = pygame.mouse.get_pos()
-            _set_public_global("mouseX", int(current_mouse_x))
-            _set_public_global("mouseY", int(current_mouse_y))
-            _set_public_global("pmouseX", int(current_mouse_x))
-            _set_public_global("pmouseY", int(current_mouse_y))
+            _set_public_global("mouse_x", int(current_mouse_x))
+            _set_public_global("mouse_y", int(current_mouse_y))
+            _set_public_global("pmouse_x", int(current_mouse_x))
+            _set_public_global("pmouse_y", int(current_mouse_y))
 
             # loop
             running = True
@@ -617,53 +617,53 @@ def run(mode=None):
                     elif event.type == pygame.KEYDOWN:
                         key_value = event.unicode if getattr(event, "unicode", "") else event.key
                         _set_public_global("key", key_value)
-                        _set_public_global("keyCode", event.key)
-                        _set_public_global("keyPressed", True)
+                        _set_public_global("key_code", event.key)
+                        _set_public_global("is_key_pressed", True)
                         _invoke_handler(sketch, "key_pressed", event.key)
                         if event.key == pygame.K_ESCAPE:
                             running = False
                     elif event.type == pygame.KEYUP:
                         key_value = event.unicode if getattr(event, "unicode", "") else event.key
                         _set_public_global("key", key_value)
-                        _set_public_global("keyCode", event.key)
-                        _set_public_global("keyPressed", False)
+                        _set_public_global("key_code", event.key)
+                        _set_public_global("is_key_pressed", False)
                         _invoke_handler(sketch, "key_released", event.key)
                     elif event.type == pygame.TEXTINPUT:
                         _set_public_global("key", event.text)
                         _invoke_handler(sketch, "key_typed", event.text)
                     elif event.type == pygame.MOUSEBUTTONDOWN:
-                        _set_public_global("pmouseX", mouseX)
-                        _set_public_global("pmouseY", mouseY)
-                        _set_public_global("mouseX", event.pos[0])
-                        _set_public_global("mouseY", event.pos[1])
-                        _set_public_global("mousePressed", True)
-                        _set_public_global("mouseButton", event.button)
+                        _set_public_global("pmouse_x", mouse_x)
+                        _set_public_global("pmouse_y", mouse_y)
+                        _set_public_global("mouse_x", event.pos[0])
+                        _set_public_global("mouse_y", event.pos[1])
+                        _set_public_global("is_mouse_pressed", True)
+                        _set_public_global("mouse_button", event.button)
                         _invoke_handler(sketch, "mouse_pressed", event.pos[0], event.pos[1], event.button)
                     elif event.type == pygame.MOUSEBUTTONUP:
-                        _set_public_global("pmouseX", mouseX)
-                        _set_public_global("pmouseY", mouseY)
-                        _set_public_global("mouseX", event.pos[0])
-                        _set_public_global("mouseY", event.pos[1])
-                        _set_public_global("mousePressed", False)
-                        _set_public_global("mouseButton", event.button)
+                        _set_public_global("pmouse_x", mouse_x)
+                        _set_public_global("pmouse_y", mouse_y)
+                        _set_public_global("mouse_x", event.pos[0])
+                        _set_public_global("mouse_y", event.pos[1])
+                        _set_public_global("is_mouse_pressed", False)
+                        _set_public_global("mouse_button", event.button)
                         _invoke_handler(sketch, "mouse_released", event.pos[0], event.pos[1], event.button)
                         _invoke_handler(sketch, "mouse_clicked", event.pos[0], event.pos[1], event.button)
                     elif event.type == pygame.MOUSEMOTION:
-                        _set_public_global("pmouseX", mouseX)
-                        _set_public_global("pmouseY", mouseY)
-                        _set_public_global("mouseX", event.pos[0])
-                        _set_public_global("mouseY", event.pos[1])
+                        _set_public_global("pmouse_x", mouse_x)
+                        _set_public_global("pmouse_y", mouse_y)
+                        _set_public_global("mouse_x", event.pos[0])
+                        _set_public_global("mouse_y", event.pos[1])
                         if any(event.buttons):
-                            _set_public_global("mousePressed", True)
+                            _set_public_global("is_mouse_pressed", True)
                             _invoke_handler(sketch, "mouse_dragged", event.pos[0], event.pos[1], event.rel[0], event.rel[1])
                         else:
-                            _set_public_global("mousePressed", False)
+                            _set_public_global("is_mouse_pressed", False)
                             _invoke_handler(sketch, "mouse_moved", event.pos[0], event.pos[1], event.rel[0], event.rel[1])
                     elif event.type == pygame.MOUSEWHEEL:
                         _invoke_handler(sketch, "mouse_wheel", event.x, event.y)
 
                 _dispatch_input_events(sketch)
-                _set_public_global("frameCount", frameCount + 1)
+                _set_public_global("frame_count", frame_count + 1)
                 _draw_call_depth += 1
                 try:
                     sketch.draw()

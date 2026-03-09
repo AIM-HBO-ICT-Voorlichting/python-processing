@@ -3,9 +3,9 @@ import os
 import tempfile
 
 # State
-frame_count = 0
-mouse_x = 0
-mouse_y = 0
+local_frame_count = 0
+local_mouse_x = 0
+local_mouse_y = 0
 last_key = ""
 last_typed = ""
 last_event = "none"
@@ -27,8 +27,8 @@ nf_test_status = "not-run"
 text_align_status = "not-run"
 fullscreen_test_status = "not-run"
 
-# Test fullScreen() before run() initializes the window.
-fullScreen()
+# Test full_screen() before run() initializes the window.
+full_screen()
 
 # Visual style state
 fill_on = True
@@ -52,17 +52,17 @@ def setup():
     global nf_test_value, nf_test_status, text_align_status, fullscreen_test_status
     frame_rate(60)
     title("processing.py API + Event Handler Test")
-    textSize(18)
+    text_size(18)
 
-    if width == displayWidth and height == displayHeight:
+    if width == display_width and height == display_height:
         fullscreen_test_status = "ok"
     else:
         fullscreen_test_status = "failed-size-" + str(width) + "x" + str(height)
 
-    # loadImage()/image() test: create a tiny PNG, load it, and validate dimensions.
+    # load_image()/image() test: create a tiny PNG, load it, and validate dimensions.
     tmp_path = os.path.join(tempfile.gettempdir(), "processing_load_image_test.png")
     _write_test_png(tmp_path)
-    image_test_surface = loadImage(tmp_path)
+    image_test_surface = load_image(tmp_path)
     if image_test_surface.get_size() == (1, 1):
         image_test_status = "ok"
     else:
@@ -83,29 +83,29 @@ def setup():
     else:
         nf_test_status = "failed-value-" + nf_test_value
 
-    textAlign(LEFT, TOP)
+    text_align(LEFT, TOP)
     text_align_status = "ok"
 
 
 def draw():
-    global frame_count, millis_now_value, millis_test_status
-    frame_count += 1
+    global local_frame_count, millis_now_value, millis_test_status
+    local_frame_count += 1
 
     # Base background
     background(245)
 
-    # Style setup using color(), fill(), stroke(), strokeWeight()
+    # Style setup using color(), fill(), stroke(), stroke_weight()
     if fill_on:
         fill(current_fill[0], current_fill[1], current_fill[2])
     else:
-        noFill()
+        no_fill()
 
     if stroke_on:
         stroke(current_stroke[0], current_stroke[1], current_stroke[2])
     else:
-        noStroke()
+        no_stroke()
 
-    strokeWeight(stroke_w)
+    stroke_weight(stroke_w)
 
     # Shapes: rect(), circle(), point(), line(), triangle(), quad(), ellipse(), arc(), bezier()
     rect(40, 80, 160, 100)
@@ -121,21 +121,21 @@ def draw():
     # Cursor marker
     fill(255, 80, 80)
     stroke(0)
-    strokeWeight(1)
-    circle(mouse_x, mouse_y, 14)
+    stroke_weight(1)
+    circle(local_mouse_x, local_mouse_y, 14)
 
-    # Text overlay (textSize() already called in setup)
+    # Text overlay (text_size() already called in setup)
     fill(15)
-    noStroke()
+    no_stroke()
     text("API draw calls done each frame", 20, 20)
-    text("frame: " + str(frame_count), 20, 45)
-    text("mouse: (" + str(mouse_x) + ", " + str(mouse_y) + ")", 20, 70)
+    text("frame: " + str(local_frame_count), 20, 45)
+    text("mouse: (" + str(local_mouse_x) + ", " + str(local_mouse_y) + ")", 20, 70)
     text("last key: " + str(last_key), 20, 95)
     text("last typed: " + str(last_typed), 20, 120)
     text("last event: " + str(last_event), 20, 145)
     text("wheel: dx=" + str(wheel_dx) + " dy=" + str(wheel_dy), 20, 170)
     text("fill_on=" + str(fill_on) + " stroke_on=" + str(stroke_on), 20, 195)
-    text("strokeWeight=" + str(stroke_w), 20, 220)
+    text("stroke_weight=" + str(stroke_w), 20, 220)
 
     fill(40)
     text("Controls:", 20, 260)
@@ -146,17 +146,17 @@ def draw():
     # Global variable validation panel
     text("Globals validation:", 500, 20)
     text("width/height: " + str(width) + " / " + str(height), 500, 45)
-    text("displayWidth/displayHeight: " + str(displayWidth) + " / " + str(displayHeight), 500, 70)
-    text("pixelWidth/pixelHeight: " + str(pixelWidth) + " / " + str(pixelHeight), 500, 95)
-    text("frameCount: " + str(frameCount), 500, 120)
+    text("display_width/display_height: " + str(display_width) + " / " + str(display_height), 500, 70)
+    text("pixel_width/pixel_height: " + str(pixel_width) + " / " + str(pixel_height), 500, 95)
+    text("frame_count: " + str(frame_count), 500, 120)
     text("focused: " + str(focused), 500, 145)
-    text("mouseX/mouseY: " + str(mouseX) + " / " + str(mouseY), 500, 170)
-    text("pmouseX/pmouseY: " + str(pmouseX) + " / " + str(pmouseY), 500, 195)
-    text("mousePressed: " + str(mousePressed), 500, 220)
-    text("mouseButton: " + str(mouseButton), 500, 245)
+    text("mouse_x/mouse_y: " + str(mouse_x) + " / " + str(mouse_y), 500, 170)
+    text("pmouse_x/pmouse_y: " + str(pmouse_x) + " / " + str(pmouse_y), 500, 195)
+    text("is_mouse_pressed: " + str(is_mouse_pressed), 500, 220)
+    text("mouse_button: " + str(mouse_button), 500, 245)
     text("key: " + str(key), 500, 270)
-    text("keyCode: " + str(keyCode), 500, 295)
-    text("keyPressed: " + str(keyPressed), 500, 320)
+    text("key_code: " + str(key_code), 500, 295)
+    text("is_key_pressed: " + str(is_key_pressed), 500, 320)
     text("input_pending: " + str(input_pending()), 500, 345)
     text("input_last: " + str(console_last), 500, 370)
     text("input_error: " + str(console_error), 500, 395)
@@ -170,9 +170,9 @@ def draw():
     text("Image test status: " + image_test_status, 20, 445)
     if image_test_surface is not None:
         image(image_test_surface, 20, 460, 90, 90)
-        noFill()
+        no_fill()
         stroke(20)
-        strokeWeight(1)
+        stroke_weight(1)
         rect(20, 460, 90, 90)
 
     millis_now_value = millis()
@@ -180,21 +180,21 @@ def draw():
         millis_test_status = "failed-monotonic"
 
     fill(20)
-    noStroke()
+    no_stroke()
     text("random(10,20) status: " + random_test_status + " value=" + nf(random_last_value, 2, 3), 500, 445)
     text("millis() status: " + millis_test_status + " start=" + str(millis_start_value) + " now=" + str(millis_now_value), 500, 470)
     text("nf() status: " + nf_test_status + " value=" + nf_test_value, 500, 495)
-    text("textAlign() status: " + text_align_status, 500, 520)
-    text("fullScreen() status: " + fullscreen_test_status, 500, 545)
+    text("text_align() status: " + text_align_status, 500, 520)
+    text("full_screen() status: " + fullscreen_test_status, 500, 545)
 
-    # textAlign() visual test: all labels should line up around the anchors.
-    textAlign(LEFT, TOP)
+    # text_align() visual test: all labels should line up around the anchors.
+    text_align(LEFT, TOP)
     text("LEFT", 20, 560)
-    textAlign(CENTER, TOP)
+    text_align(CENTER, TOP)
     text("CENTER", 450, 560)
-    textAlign(RIGHT, TOP)
+    text_align(RIGHT, TOP)
     text("RIGHT", 880, 560)
-    textAlign(LEFT, TOP)
+    text_align(LEFT, TOP)
 
 
 # Keyboard handlers
@@ -246,36 +246,36 @@ def key_typed(char):
 # Mouse handlers
 
 def mouse_pressed(x, y, button):
-    global mouse_x, mouse_y, last_event, is_dragging
-    mouse_x, mouse_y = x, y
+    global local_mouse_x, local_mouse_y, last_event, is_dragging
+    local_mouse_x, local_mouse_y = x, y
     last_event = "mouse_pressed(button=" + str(button) + ")"
     is_dragging = True
 
 
 def mouse_released(x, y, button):
-    global mouse_x, mouse_y, last_event, is_dragging
-    mouse_x, mouse_y = x, y
+    global local_mouse_x, local_mouse_y, last_event, is_dragging
+    local_mouse_x, local_mouse_y = x, y
     last_event = "mouse_released(button=" + str(button) + ")"
     is_dragging = False
 
 
 def mouse_clicked(x, y, button):
-    global mouse_x, mouse_y, last_event
-    mouse_x, mouse_y = x, y
+    global local_mouse_x, local_mouse_y, last_event
+    local_mouse_x, local_mouse_y = x, y
     last_event = "mouse_clicked(button=" + str(button) + ")"
 
 
 
 def mouse_moved(x, y, dx, dy):
-    global mouse_x, mouse_y, last_event
-    mouse_x, mouse_y = x, y
+    global local_mouse_x, local_mouse_y, last_event
+    local_mouse_x, local_mouse_y = x, y
     last_event = "mouse_moved(dx=" + str(dx) + ", dy=" + str(dy) + ")"
 
 
 
 def mouse_dragged(x, y, dx, dy):
-    global mouse_x, mouse_y, last_event, is_dragging
-    mouse_x, mouse_y = x, y
+    global local_mouse_x, local_mouse_y, last_event, is_dragging
+    local_mouse_x, local_mouse_y = x, y
     is_dragging = True
     last_event = "mouse_dragged(dx=" + str(dx) + ", dy=" + str(dy) + ")"
 

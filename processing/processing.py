@@ -1,11 +1,13 @@
-import builtins
 import inspect
 import os
-import queue
 import random as _random_module
 import threading
 import time
 import pygame
+from .core.constants import LEFT, RIGHT, CENTER, TOP, BOTTOM, BASELINE
+from .core.public_globals import PUBLIC_GLOBAL_NAMES
+from .core.dispatch import invoke_handler
+from .core.input_async import AsyncInputManager
 
 
 _width = 800
@@ -14,14 +16,6 @@ _fps = 60
 _title = "Sketch"
 _window_icon = "icon.png"
 _fullscreen_enabled = False
-
-# Processing-style text alignment constants
-LEFT = 37
-RIGHT = 39
-CENTER = 3
-TOP = 101
-BOTTOM = 102
-BASELINE = 0
 
 _screen = None
 _clock = None
@@ -40,13 +34,9 @@ _sketch_globals = None
 _millis_start = None
 
 # async console input state (explicit API: request_input + callbacks)
-_input_events = queue.Queue()
-_input_lock = threading.Lock()
-_input_pending = False
+_input_manager = AsyncInputManager()
 _draw_call_depth = 0
 _run_thread = None
-_input_patch_active = False
-_original_input = builtins.input
 
 # Public Processing-like globals
 width = _width
@@ -346,19 +336,10 @@ def request_input(prompt="> "):
     Start een asynchrone console input request.
     Returnt True als een nieuwe request gestart is, False als er al één pending is.
     """
-    global _input_pending
-    with _input_lock:
-        if _input_pending:
-            return False
-        _input_pending = True
-
-    thread = threading.Thread(target=_input_worker, args=(str(prompt),), daemon=True)
-    thread.start()
-    return True
+    return _input_manager.request_input(prompt)
 
 def input_pending():
-    with _input_lock:
-        return _input_pending
+    return _input_manager.input_pending()
 
 def arc(x, y, w, h, start, stop):
     _require_screen("arc")
@@ -407,82 +388,8 @@ def _set_public_global(name, value):
 def _sync_public_globals_to_sketch():
     if _sketch_globals is None:
         return
-    for name in (
-        "width", "height", "display_width", "display_height", "pixel_width", "pixel_height",
-        "frame_count", "focused", "mouse_x", "mouse_y", "pmouse_x", "pmouse_y",
-        "is_mouse_pressed", "mouse_button", "key", "key_code", "is_key_pressed"
-    ):
+    for name in PUBLIC_GLOBAL_NAMES:
         _sketch_globals[name] = globals()[name]
-
-def _invoke_handler(sketch, name, *args):
-    if not hasattr(sketch, name):
-        return
-
-    handler = getattr(sketch, name)
-    sig = inspect.signature(handler)
-    params = list(sig.parameters.values())
-    has_varargs = any(p.kind == inspect.Parameter.VAR_POSITIONAL for p in params)
-
-    if has_varargs:
-        handler(*args)
-        return
-
-    positional = [
-        p for p in params
-        if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
-    ]
-
-    if not positional:
-        handler()
-    else:
-        handler(*args[:len(positional)])
-
-def _input_worker(prompt):
-    global _input_pending
-    try:
-        text_line = input(prompt)
-        _input_events.put(("received", text_line))
-    except EOFError as err:
-        _input_events.put(("error", err))
-    except Exception as err:
-        _input_events.put(("error", err))
-    finally:
-        with _input_lock:
-            _input_pending = False
-
-def _dispatch_input_events(sketch):
-    while True:
-        try:
-            kind, payload = _input_events.get_nowait()
-        except queue.Empty:
-            break
-
-        if kind == "received":
-            _invoke_handler(sketch, "input_received", payload)
-        elif kind == "error":
-            _invoke_handler(sketch, "input_error", payload)
-
-def _guarded_input(*args, **kwargs):
-    if _draw_call_depth > 0 and threading.current_thread() is _run_thread:
-        raise RuntimeError(
-            "input() is not allowed inside draw() because it blocks rendering. "
-            "Use request_input(prompt) with input_received(text) instead."
-        )
-    return _original_input(*args, **kwargs)
-
-def _patch_input_guard():
-    global _input_patch_active
-    if _input_patch_active:
-        return
-    builtins.input = _guarded_input
-    _input_patch_active = True
-
-def _restore_input_guard():
-    global _input_patch_active
-    if not _input_patch_active:
-        return
-    builtins.input = _original_input
-    _input_patch_active = False
 
 def _resolve_icon_path(path):
     if os.path.isabs(path):
@@ -584,7 +491,7 @@ def run(mode=None):
         raise ValueError('mode must be None, "static", or "interactive"')
 
     _init_window()
-    _patch_input_guard()
+    _input_manager.patch_input_guard(lambda: _draw_call_depth, lambda: _run_thread)
 
     try:
         if mode == "interactive":
@@ -619,7 +526,7 @@ def run(mode=None):
                         _set_public_global("key", key_value)
                         _set_public_global("key_code", event.key)
                         _set_public_global("is_key_pressed", True)
-                        _invoke_handler(sketch, "key_pressed", event.key)
+                        invoke_handler(sketch, "key_pressed", event.key)
                         if event.key == pygame.K_ESCAPE:
                             running = False
                     elif event.type == pygame.KEYUP:
@@ -627,10 +534,10 @@ def run(mode=None):
                         _set_public_global("key", key_value)
                         _set_public_global("key_code", event.key)
                         _set_public_global("is_key_pressed", False)
-                        _invoke_handler(sketch, "key_released", event.key)
+                        invoke_handler(sketch, "key_released", event.key)
                     elif event.type == pygame.TEXTINPUT:
                         _set_public_global("key", event.text)
-                        _invoke_handler(sketch, "key_typed", event.text)
+                        invoke_handler(sketch, "key_typed", event.text)
                     elif event.type == pygame.MOUSEBUTTONDOWN:
                         _set_public_global("pmouse_x", mouse_x)
                         _set_public_global("pmouse_y", mouse_y)
@@ -638,7 +545,7 @@ def run(mode=None):
                         _set_public_global("mouse_y", event.pos[1])
                         _set_public_global("is_mouse_pressed", True)
                         _set_public_global("mouse_button", event.button)
-                        _invoke_handler(sketch, "mouse_pressed", event.pos[0], event.pos[1], event.button)
+                        invoke_handler(sketch, "mouse_pressed", event.pos[0], event.pos[1], event.button)
                     elif event.type == pygame.MOUSEBUTTONUP:
                         _set_public_global("pmouse_x", mouse_x)
                         _set_public_global("pmouse_y", mouse_y)
@@ -646,8 +553,8 @@ def run(mode=None):
                         _set_public_global("mouse_y", event.pos[1])
                         _set_public_global("is_mouse_pressed", False)
                         _set_public_global("mouse_button", event.button)
-                        _invoke_handler(sketch, "mouse_released", event.pos[0], event.pos[1], event.button)
-                        _invoke_handler(sketch, "mouse_clicked", event.pos[0], event.pos[1], event.button)
+                        invoke_handler(sketch, "mouse_released", event.pos[0], event.pos[1], event.button)
+                        invoke_handler(sketch, "mouse_clicked", event.pos[0], event.pos[1], event.button)
                     elif event.type == pygame.MOUSEMOTION:
                         _set_public_global("pmouse_x", mouse_x)
                         _set_public_global("pmouse_y", mouse_y)
@@ -655,14 +562,14 @@ def run(mode=None):
                         _set_public_global("mouse_y", event.pos[1])
                         if any(event.buttons):
                             _set_public_global("is_mouse_pressed", True)
-                            _invoke_handler(sketch, "mouse_dragged", event.pos[0], event.pos[1], event.rel[0], event.rel[1])
+                            invoke_handler(sketch, "mouse_dragged", event.pos[0], event.pos[1], event.rel[0], event.rel[1])
                         else:
                             _set_public_global("is_mouse_pressed", False)
-                            _invoke_handler(sketch, "mouse_moved", event.pos[0], event.pos[1], event.rel[0], event.rel[1])
+                            invoke_handler(sketch, "mouse_moved", event.pos[0], event.pos[1], event.rel[0], event.rel[1])
                     elif event.type == pygame.MOUSEWHEEL:
-                        _invoke_handler(sketch, "mouse_wheel", event.x, event.y)
+                        invoke_handler(sketch, "mouse_wheel", event.x, event.y)
 
-                _dispatch_input_events(sketch)
+                _input_manager.dispatch_events(sketch, invoke_handler)
                 _set_public_global("frame_count", frame_count + 1)
                 _draw_call_depth += 1
                 try:
@@ -694,11 +601,11 @@ def run(mode=None):
                     elif event.type == getattr(pygame, "WINDOWFOCUSLOST", -1):
                         _set_public_global("focused", False)
 
-                _dispatch_input_events(sketch)
+                _input_manager.dispatch_events(sketch, invoke_handler)
                 _clock.tick(30)
 
     finally:
-        _restore_input_guard()
+        _input_manager.restore_input_guard()
         if mode == "interactive":
             pygame.key.stop_text_input()
         _shutdown()

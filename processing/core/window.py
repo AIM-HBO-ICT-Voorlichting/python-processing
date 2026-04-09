@@ -26,6 +26,8 @@ def apply_window_icon(state, pygame, base_dir):
 
 
 def init_window(state, pygame, set_public_global, apply_window_icon_func):
+    if state.get("_screen") is not None:
+        return
     pygame.init()
     print("and hello from python-processing. https://github.com/AIM-HBO-ICT-Voorlichting/python-processing")
     pygame.font.init()

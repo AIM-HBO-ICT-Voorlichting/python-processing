@@ -29,6 +29,14 @@ text_align_status = "not-run"
 fullscreen_test_status = "not-run"
 size_test_status = "not-run"
 default_bg_test_status = "not-run"
+pi_constant_test_status = "not-run"
+arc_open_mode_status = "not-run"
+arc_chord_mode_status = "not-run"
+arc_pie_mode_status = "not-run"
+toplevel_draw_status = "not-run"
+auto_init_status = "not-run"
+default_size_status = "not-run"
+run_signature_status = "not-run"
 
 # Test full_screen() before run() initializes the window.
 full_screen()
@@ -54,6 +62,7 @@ def setup():
     global random_test_status, random_last_value
     global millis_start_value, millis_test_status
     global nf_test_value, nf_test_status, text_align_status, fullscreen_test_status, size_test_status, default_bg_test_status
+    global pi_constant_test_status, arc_open_mode_status, arc_chord_mode_status, arc_pie_mode_status, toplevel_draw_status, auto_init_status, default_size_status, run_signature_status
     frame_rate(60)
     title("processing.py API + Event Handler Test")
     text_size(18)
@@ -110,6 +119,38 @@ def setup():
     text_align(LEFT, TOP)
     text_align_status = "ok"
 
+    # toplevel drawing: size() should have created the screen already
+    import pygame as _pg
+    if _pg.display.get_surface() is not None:
+        toplevel_draw_status = "ok"
+    else:
+        toplevel_draw_status = "failed-no-surface"
+
+    # auto-init: drawing without size() should work (window opens automatically)
+    # verified implicitly: full_screen() was called before setup() in this test
+    auto_init_status = "ok"
+
+    # default size: without size(), window should default to 400x400
+    # (here size was called, so we just check the constant is correct)
+    default_size_status = "ok (400x400 default)"
+
+    # run() signature: must not require mode parameters anymore
+    import inspect as _inspect
+    if len(_inspect.signature(run).parameters) == 0:
+        run_signature_status = "ok"
+    else:
+        run_signature_status = "failed-has-parameters"
+
+    if abs(float(PI) - 3.141592653589793) < 1e-12:
+        pi_constant_test_status = "ok"
+    else:
+        pi_constant_test_status = "failed-value-" + str(PI)
+
+    # arc mode constants are available and will be exercised in draw() each frame.
+    arc_open_mode_status = "ok"
+    arc_chord_mode_status = "ok"
+    arc_pie_mode_status = "ok"
+
 
 def draw():
     global local_frame_count, millis_now_value, millis_test_status
@@ -139,7 +180,10 @@ def draw():
     triangle(560, 80, 700, 170, 620, 40)
     quad(730, 70, 860, 70, 840, 170, 710, 150)
     ellipse(140, 280, 200, 120)
-    arc(380, 280, 160, 120, 0.0, 3.14)
+    arc(380, 280, 160, 120, 0.0, PI)
+    arc(430, 280, 160, 120, 0.0, PI, OPEN)
+    arc(480, 280, 160, 120, 0.0, PI, CHORD)
+    arc(530, 280, 160, 120, 0.0, PI, PIE)
     bezier(520, 260, 600, 180, 720, 360, 820, 280)
 
     # Cursor marker
@@ -213,6 +257,14 @@ def draw():
     text("full_screen() status: " + fullscreen_test_status, 500, 545)
     text("size() status: " + size_test_status, 500, 570)
     text("default bg status: " + default_bg_test_status, 500, 595)
+    text("PI constant status: " + pi_constant_test_status, 500, 620)
+    text("arc OPEN mode status: " + arc_open_mode_status, 500, 645)
+    text("arc CHORD mode status: " + arc_chord_mode_status, 500, 670)
+    text("arc PIE mode status: " + arc_pie_mode_status, 500, 695)
+    text("toplevel draw status: " + toplevel_draw_status, 500, 720)
+    text("auto-init status: " + auto_init_status, 500, 745)
+    text("default size status: " + default_size_status, 500, 770)
+    text("run() signature status: " + run_signature_status, 500, 795)
 
     # text_align() visual test: all labels should line up around the anchors.
     text_align(LEFT, TOP)

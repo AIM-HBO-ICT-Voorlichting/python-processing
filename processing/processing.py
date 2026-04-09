@@ -1,9 +1,10 @@
+import atexit
 import os
 import random as _random_module
 import threading
 import time
 import pygame
-from .core.constants import LEFT, RIGHT, CENTER, TOP, BOTTOM, BASELINE
+from .core.constants import LEFT, RIGHT, CENTER, TOP, BOTTOM, BASELINE, OPEN, CHORD, PIE, PI, TWO_PI
 from .core.public_globals import PUBLIC_GLOBAL_NAMES
 from .core.dispatch import invoke_handler
 from .core.input_async import AsyncInputManager
@@ -22,12 +23,13 @@ from .api import system as _system_api
 from .api import utils as _utils_api
 
 
-_width = 800
-_height = 500
+_width = 400
+_height = 400
 _fps = 60
 _title = "Sketch"
 _window_icon = "icon.png"
 _fullscreen_enabled = False
+_run_called = False
 
 _screen = None
 _clock = None
@@ -80,6 +82,8 @@ def _state():
 def size(w, h):
     """Set the sketch window size in pixels."""
     _system_api.size(_state(), pygame, _set_public_global, w, h)
+    if _screen is None:
+        _init_window()
 
 def full_screen():
     """Switch the sketch window to fullscreen mode."""
@@ -204,9 +208,9 @@ def input_pending():
     """Return whether an async input request is currently pending."""
     return _system_api.input_pending(_input_manager)
 
-def arc(x, y, w, h, start, stop):
+def arc(x, y, w, h, start, stop, mode=OPEN):
     """Draw an arc on an ellipse defined by center and size."""
-    _drawing_api.arc(_state(), _require_screen, _apply_coords, x, y, w, h, start, stop)
+    _drawing_api.arc(_state(), _require_screen, _apply_coords, x, y, w, h, start, stop, mode)
 
 def bezier(x1, y1, x2, y2, x3, y3, x4, y4, segments=20):
     """Draw a cubic bezier curve."""
@@ -224,7 +228,8 @@ def _apply_coords(vals):
     return tuple(int(v) for v in vals)
 
 def _require_screen(func_name: str):
-    _require_screen_core(_state(), func_name)
+    if _screen is None:
+        _init_window()
 
 def _set_public_global(name, value):
     _set_public_global_core(_state(), name, value)
@@ -253,8 +258,10 @@ def _shutdown():
 # Modes
 # --------------------
 
-def run(mode=None):
-    """Start the sketch loop in auto, static, or interactive mode."""
+def run():
+    """Start the sketch loop in auto mode (interactive if draw() exists, else static)."""
+    global _run_called
+    _run_called = True
     sketch = _make_sketch_from_caller()
     _sync_public_globals_to_sketch()
 
@@ -274,7 +281,7 @@ def run(mode=None):
         _draw_call_depth -= 1
 
     run_app(
-        mode,
+        None,
         sketch,
         pygame=pygame,
         init_window=_init_window,
@@ -291,3 +298,19 @@ def run(mode=None):
         fps_getter=lambda: _fps,
         shutdown=_shutdown,
     )
+
+
+def _maybe_auto_run():
+    if _screen is None or _run_called:
+        return
+    pygame.display.flip()
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
+    pygame.quit()
+
+atexit.register(_maybe_auto_run)

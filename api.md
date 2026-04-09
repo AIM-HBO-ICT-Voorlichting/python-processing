@@ -9,7 +9,7 @@ Notes:
 ## Structure
 
 ### `size(w, h)`
-Set the sketch window size in pixels. The window is resized immediately, even when called from `setup()`. The new surface is initialized with the default background color (light gray, `(200, 200, 200)`).
+Set the sketch window size in pixels. The window is created immediately when called — even outside `setup()`, at the top level of your sketch. This allows drawing commands to follow directly without needing `setup()`. The new surface is initialized with the default background color (light gray, `(200, 200, 200)`).
 
 ### `full_screen()`
 Switch the sketch window to fullscreen mode. Must be called before `run()`.
@@ -17,13 +17,16 @@ Switch the sketch window to fullscreen mode. Must be called before `run()`.
 ### `frame_rate(fps)`
 Set the target frame rate for interactive mode.
 
-### `run(mode=None)`
+### `run()`
 Start the sketch loop.
 
-Parameters:
-- `mode=None`: auto-detect mode.
-- `mode="interactive"`: requires `setup()` and `draw()`.
-- `mode="static"`: renders once (or from `setup()`) and keeps window open.
+Mode is auto-detected:
+- interactive when `draw()` is defined
+- static otherwise
+
+Usage notes:
+- Interactive mode: `run()` is required to start the frame loop and input callbacks.
+- Static mode: `run()` is optional. Top-level drawing (outside `setup()`/`draw()`) works without it.
 
 ## Environment
 
@@ -64,8 +67,13 @@ Draw a triangle.
 ### `quad(x1, y1, x2, y2, x3, y3, x4, y4)`
 Draw a quadrilateral.
 
-### `arc(x, y, w, h, start, stop)`
+### `arc(x, y, w, h, start, stop, mode=OPEN)`
 Draw an arc over an ellipse defined by center and size.
+
+Modes:
+- `OPEN`: open curve (default)
+- `CHORD`: closes endpoints with a straight line
+- `PIE`: closes endpoints to center
 
 ### `bezier(x1, y1, x2, y2, x3, y3, x4, y4, segments=20)`
 Draw a cubic Bezier curve.
@@ -168,6 +176,15 @@ Alignment constants:
 - `TOP`
 - `BOTTOM`
 - `BASELINE`
+
+Arc constants:
+- `OPEN`
+- `CHORD`
+- `PIE`
+
+Math constants:
+- `PI`
+- `TWO_PI`
 
 Use these with `text_align(...)`.
 

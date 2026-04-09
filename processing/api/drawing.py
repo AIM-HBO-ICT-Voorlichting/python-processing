@@ -1,4 +1,5 @@
-from ..core.constants import CENTER, RIGHT, BOTTOM, BASELINE
+import math
+from ..core.constants import CENTER, RIGHT, BOTTOM, BASELINE, OPEN, CHORD, PIE
 
 
 def background(state, require_screen, *args):
@@ -142,12 +143,62 @@ def image(state, require_screen, apply_coords, resolve_icon_path, img, x, y, w=N
     state["_screen"].blit(scaled, (x, y))
 
 
-def arc(state, require_screen, apply_coords, x, y, w, h, start, stop):
+def _normalize_arc_mode(mode):
+    if mode in (OPEN, CHORD, PIE):
+        return mode
+
+    key = str(mode).upper()
+    if key == "OPEN":
+        return OPEN
+    if key == "CHORD":
+        return CHORD
+    if key == "PIE":
+        return PIE
+
+    raise ValueError("arc() mode must be OPEN, CHORD, or PIE")
+
+
+def _arc_points(cx, cy, w, h, start, stop):
+    span = abs(float(stop) - float(start))
+    segments = max(8, int(max(w, h) * span / (2 * math.pi)))
+    rx = w / 2.0
+    ry = h / 2.0
+    points = []
+    for i in range(segments + 1):
+        t = float(start) + (float(stop) - float(start)) * (i / segments)
+        px = int(cx + rx * math.cos(t))
+        py = int(cy + ry * math.sin(t))
+        points.append((px, py))
+    return points
+
+
+def arc(state, require_screen, apply_coords, x, y, w, h, start, stop, mode=OPEN):
     pygame = state["pygame"]
     require_screen("arc")
-    rect = pygame.Rect(apply_coords((x - w / 2, y - h / 2, w, h)))
+
+    mode = _normalize_arc_mode(mode)
+    x, y, w, h = apply_coords((x, y, w, h))
+    rect = pygame.Rect(int(x - w / 2), int(y - h / 2), int(w), int(h))
+    arc_pts = _arc_points(x, y, w, h, start, stop)
+
+    if state["_fill_enabled"] and mode != OPEN and len(arc_pts) >= 2:
+        if mode == PIE:
+            fill_pts = [(int(x), int(y))] + arc_pts
+        else:
+            fill_pts = arc_pts
+        if len(fill_pts) >= 3:
+            pygame.draw.polygon(state["_screen"], state["_fill_color"], fill_pts)
+
     if state["_stroke_enabled"]:
-        pygame.draw.arc(state["_screen"], state["_stroke_color"], rect, float(start), float(stop), int(state["_stroke_weight"]))
+        stroke_weight = int(state["_stroke_weight"])
+        pygame.draw.arc(state["_screen"], state["_stroke_color"], rect, float(start), float(stop), stroke_weight)
+        if len(arc_pts) >= 2:
+            if mode == CHORD:
+                pygame.draw.line(state["_screen"], state["_stroke_color"], arc_pts[0], arc_pts[-1], stroke_weight)
+            elif mode == PIE:
+                center = (int(x), int(y))
+                pygame.draw.line(state["_screen"], state["_stroke_color"], center, arc_pts[0], stroke_weight)
+                pygame.draw.line(state["_screen"], state["_stroke_color"], center, arc_pts[-1], stroke_weight)
 
 
 def bezier(state, require_screen, apply_coords, x1, y1, x2, y2, x3, y3, x4, y4, segments=20):

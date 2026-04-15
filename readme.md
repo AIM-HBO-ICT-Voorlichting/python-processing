@@ -16,8 +16,10 @@ You can use functions like `size()`, `background()`, `circle()`, `text()`, `imag
 ## Preparation
 
 1. Have Python!
-2. Install Pygame-CE using pip: pip install pygame-ce
-3. Copy the folder processing to your program's folder or to /Lib/site-packages
+2. Install Pygame-CE using pip: pip install pygame-ce or pip install -r requirements.txt
+3. Copy the folder "processing" to your program's folder or to /Lib/site-packages
+
+You can also use an IDE like Thonny. Use its package manager to install pygame-ce, and copy the "processing" folder into the same directory as your program or to /Lib/site-packages folder.
 
 ## Create Your First Sketch
 

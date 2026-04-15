@@ -1,6 +1,6 @@
 # Python Processing Starter
 
-This project provides a small Processing-like API on top of Pygame, using Python-style naming.
+This project provides a small Processing-like API on top of Pygame-CE, using Python-style naming.
 It is designed for quick visual programming, classroom demos, and beginner-friendly sketch workflows.
 
 ## Project Goal
@@ -16,7 +16,7 @@ You can use functions like `size()`, `background()`, `circle()`, `text()`, `imag
 ## Preparation
 
 1. Have Python!
-2. Install Pygame using pip: pip install pygame
+2. Install Pygame-CE using pip: pip install pygame-ce
 3. Copy the folder processing to your program's folder or to /Lib/site-packages
 
 ## Create Your First Sketch
